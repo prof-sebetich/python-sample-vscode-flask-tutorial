@@ -20,14 +20,12 @@ steps:
     displayName: 'Use Python $(python.version)'
  
   - script: |
-python -m pip install --upgrade pip 
-
-pip install -r requirements.txt 
-
-displayName: 'Install dependencies'  
+      python -m pip install --upgrade pip
+      pip install -r requirements.txt
+      displayName: 'Install dependencies'
 
  
- - task: ArchiveFiles@2
+  - task: ArchiveFiles@2
     displayName: 'Archive files'
     inputs:
       rootFolderOrFile: $(System.DefaultWorkingDirectory)
@@ -36,24 +34,15 @@ displayName: 'Install dependencies'
       archiveFile: $(Build.ArtifactStagingDirectory)/$(Build.BuildId)-$(python.version).zip 
       replaceExistingArchive: true 
 
- 
-
   - task: PublishBuildArtifacts@1 
-
     inputs: 
-
       PathtoPublish: '$(Build.ArtifactStagingDirectory)' 
-
       ArtifactName: 'drop' 
-
       publishLocation: 'Container' 
 
  
 
   - script: | 
-
       pip install pytest pytest-azurepipelines 
-
       pytest 
-
       displayName: 'pytest'   
