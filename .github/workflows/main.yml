@@ -1,39 +1,49 @@
-#Note: This is a third party action and currently only supports Linux: https://github.com/marketplace/actions/create-zip-file
+name: CI
+
 on:
   push:
     branches:
-    - main
+      - main
+  pull_request:
+    branches:
+      - main
+
 jobs:
   build:
+    runs-on: ubuntu-latest
+
     strategy:
       matrix:
-        python.version:
-        - 3.10
-        - 3.11
-        - 3.12
-    runs-on: ubuntu-latest
+        python-version: ['3.10', '3.11', '3.12']
+
     steps:
-    - uses: actions/checkout@v2
-    - name: Use Python ${{ matrix.python.version }}
-      uses: actions/setup-python@v1
-      with:
-        python-version: ${{ matrix.python.version }}
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
-    - # 'Note: This is a third party action and currently only supports Linux: https://github.com/marketplace/actions/create-zip-file'
-      name: Archive files
-      uses: montudor/action-zip@v0.1.0
-      with:
-        args: zip -qq -r ${{ github.workspace }}/${{ github.run_id }}-${{ matrix.python.version }}.zip ${{ github.workspace }}
-    - name: Publish artifacts
-      uses: actions/upload-artifact@v2
-      with:
-        path: ${{ github.workspace }}
-        name: drop
-    - name: Run pytest
-      run: |
-        pip install pytest pytest-azurepipelines
-        pytest
-                    
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Install test dependencies
+        run: |
+          pip install pytest
+
+      - name: Run pytest
+        run: pytest
+
+      - name: Archive files
+        run: |
+          zip -r build-${{ github.run_id }}-${{ matrix.python-version }}.zip . \
+            -x "*.git*" "__pycache__/*"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: drop-${{ matrix.python-version }}
+          path: build-${{ github.run_id }}-${{ matrix.python-version }}.zip
